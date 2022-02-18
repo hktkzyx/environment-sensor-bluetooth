@@ -10,6 +10,7 @@
 
 #include <cmath>
 
+#include "config.h"
 #include "misc.h"
 
 #define I2C_SDA 4
@@ -23,9 +24,6 @@ const BLEUUID kIlluminanceUUID = BLEUUID(static_cast<uint16_t>(0x2AFB));
 const uint16_t kTemperatureDefault = 0x8000;
 const uint16_t kHumidityDefault = 0xFFFF;
 const uint8_t kIlluminanceDefault[3] = {0xFF, 0xFF, 0xFF};
-const uint8_t kIdleLimit = 10;       // second
-const uint8_t kUpdateInterval = 2;   // second
-const uint8_t kWakeUpInterval = 20;  // second
 const uint8_t kSHTAddress = 0x44;
 const uint8_t kLightAddress = 0x23;
 
@@ -35,7 +33,7 @@ BLECharacteristic *pTemperature = nullptr;
 BLECharacteristic *pHumidity = nullptr;
 BLECharacteristic *pIlluminance = nullptr;
 bool connect = false;
-uint32_t status_change, last_update = 0;
+uint32_t status_change = 0;
 
 class MyServerCallbacks : public BLEServerCallbacks {
     void onConnect(BLEServer *pServer) {
@@ -171,7 +169,7 @@ void setup() {
     Serial.begin(115200);
     SensorsSetup();
     BluetoothSetup();
-    DeepSleepSetup(kWakeUpInterval);
+    DeepSleepSetup(WAKEUP_INTERVAL);
     Serial.println("ESP32BLE setup done!");
 }
 
@@ -256,19 +254,23 @@ void loop() {
     uint32_t now = millis();
     // connect = true;  // For debug to disable deep sleep
     if ((!connect) &&
-        (static_cast<uint32_t>(now - status_change) > kIdleLimit * 1000U)) {
+        (static_cast<uint32_t>(now - status_change) > IDLE_LIMIT * 1000U)) {
         Serial.println("Going to sleep now because idle");
         esp_deep_sleep_start();
     }
-    if ((connect) &&
-        (static_cast<uint32_t>(now - last_update) > kUpdateInterval * 1000U)) {
-        float temperature, humidity, illuminace = 0;
-        bool temperature_valid, humidity_valid, illuminace_valid = false;
-        UpdateSHT(temperature, temperature_valid, humidity, humidity_valid);
-        UpdateBH1750(illuminace, illuminace_valid);
-        PublishTemperature(pTemperature, temperature, temperature_valid);
-        PublishHumidity(pHumidity, humidity, humidity_valid);
-        PublishIlluminance(pIlluminance, illuminace, illuminace_valid);
-        last_update = now;
+    if (connect) {
+        static uint32_t last_update = 0;
+        if ((static_cast<uint32_t>(now - last_update) >
+             UPDATE_INTERVAL * 1000U) ||
+            (last_update == 0)) {
+            float temperature, humidity, illuminace = 0;
+            bool temperature_valid, humidity_valid, illuminace_valid = false;
+            UpdateSHT(temperature, temperature_valid, humidity, humidity_valid);
+            UpdateBH1750(illuminace, illuminace_valid);
+            PublishTemperature(pTemperature, temperature, temperature_valid);
+            PublishHumidity(pHumidity, humidity, humidity_valid);
+            PublishIlluminance(pIlluminance, illuminace, illuminace_valid);
+            last_update = now;
+        }
     }
 }

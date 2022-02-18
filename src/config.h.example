@@ -1,0 +1,9 @@
+
+#ifndef BLESENSOR_CONFIG_H_
+#define BLESENSOR_CONFIG_H_
+
+#define IDLE_LIMIT 10       // seconds
+#define UPDATE_INTERVAL 2   // seconds
+#define WAKEUP_INTERVAL 20  // seconds
+
+#endif
