@@ -7,6 +7,7 @@
 #include <SHTSensor.h>
 #include <Wire.h>
 #include <esp_sleep.h>
+#include <esp_task_wdt.h>
 
 #include <cmath>
 
@@ -166,11 +167,23 @@ void SensorsSetup() {
 }
 
 void setup() {
+    esp_task_wdt_init(2 * IDLE_LIMIT, true);
+    esp_task_wdt_add(NULL);
     Serial.begin(115200);
     SensorsSetup();
     BluetoothSetup();
     DeepSleepSetup(WAKEUP_INTERVAL);
     Serial.println("ESP32BLE setup done!");
+}
+
+void WatchdogReset(const uint32_t interval) {
+    static uint32_t last_reset = 0;
+    uint32_t now = millis();
+    if (static_cast<uint32_t>(now - last_reset) >= interval) {
+        esp_task_wdt_reset();
+        Serial.println("Reset watchdog done");
+        last_reset = now;
+    }
 }
 
 void UpdateSHT(float &temperature, bool &temperature_valid, float &humidity,
@@ -251,6 +264,7 @@ void PublishIlluminance(BLECharacteristic *pCharacteristic, float illuminance,
 }
 
 void loop() {
+    WatchdogReset(1000 * UPDATE_INTERVAL);
     uint32_t now = millis();
     // connect = true;  // For debug to disable deep sleep
     if ((!connect) &&
