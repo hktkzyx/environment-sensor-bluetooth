@@ -167,7 +167,7 @@ void SensorsSetup() {
 }
 
 void setup() {
-    esp_task_wdt_init(2 * IDLE_LIMIT, true);
+    esp_task_wdt_init(IDLE_LIMIT, true);
     esp_task_wdt_add(NULL);
     Serial.begin(115200);
     SensorsSetup();
