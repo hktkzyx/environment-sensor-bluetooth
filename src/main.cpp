@@ -25,6 +25,7 @@ const uint8_t kLightAddress = 0x23;
 float temperature_buffer = -300;
 float humidity_buffer = -1;
 float illuminance_buffer = -1;
+uint32_t advertising_last_on = 0;
 
 std::string GenerateServiceData(const float &temperature, const float &humidity,
                                 const float &illuminance) {
@@ -63,7 +64,7 @@ BLEAdvertisementData GenerateAdvertisedData(uint8_t *pManufacturer,
     return data;
 }
 
-void Publish(const uint32_t millis_interval, const uint32_t millis_duration) {
+void Publish(const uint32_t millis_interval) {
     static uint32_t last_publish = -1;
     uint32_t now = millis();
     if (static_cast<uint32_t>(now - last_publish) > millis_interval ||
@@ -80,10 +81,13 @@ void Publish(const uint32_t millis_interval, const uint32_t millis_duration) {
             service_uuid, service_data);
         pAdvertising->setAdvertisementData(data);
         BLEDevice::startAdvertising();
-        uint32_t start = millis();
-        while (static_cast<uint32_t>(millis() - start) <= millis_duration) {
-            delay(100);
-        }
+        advertising_last_on = millis();
+    }
+}
+
+void TurnOffAdvertising(const uint32_t millis_duration) {
+    if (static_cast<uint32_t>(millis() - advertising_last_on) >
+        millis_duration) {
         BLEDevice::stopAdvertising();
     }
 }
@@ -191,5 +195,6 @@ void MeasureCycle(const uint32_t interval_millis) {
 void loop() {
     WatchdogReset(1000 * PUBLISH_INTERVAL);
     MeasureCycle(1000 * MEASURE_INTERVAL);
-    Publish(1000 * PUBLISH_INTERVAL, 1000 * PUBLISH_DURATION);
+    Publish(1000 * PUBLISH_INTERVAL);
+    TurnOffAdvertising(1000 * PUBLISH_DURATION);
 }
