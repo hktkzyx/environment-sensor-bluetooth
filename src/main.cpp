@@ -186,5 +186,5 @@ void WatchdogReset(const uint32_t interval) {
 void loop() {
     WatchdogReset(1000 * WATCHDOG_RESET_INTERVAL);
     Publish(1000 * PUBLISH_INTERVAL);
-    TurnOffAdvertising(1000 * PUBLISH_DURATION, false);
+    TurnOffAdvertising(1000 * PUBLISH_DURATION);
 }
