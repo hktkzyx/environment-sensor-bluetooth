@@ -2,10 +2,11 @@
 #ifndef BLESENSOR_CONFIG_H_
 #define BLESENSOR_CONFIG_H_
 
-#define IDLE_LIMIT 10        // seconds
-#define WAKEUP_INTERVAL 20   // seconds
-#define MEASURE_INTERVAL 10  // seconds
-#define PUBLISH_INTERVAL 5   // seconds
-#define PUBLISH_DURATION 1   // seconds
+#define DEVICE_NAME "BLE Environment Sensor 01"
+#define WATCHDOG_TIMEOUT 5         // seconds
+#define WATCHDOG_RESET_INTERVAL 1  // seconds
+#define DEEP_SLEEP_DURATION 30     // seconds
+#define PUBLISH_INTERVAL 5         // seconds
+#define PUBLISH_DURATION 1         // seconds
 
 #endif
